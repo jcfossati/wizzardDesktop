@@ -1,86 +1,95 @@
-<h2>SabreTools</h2>
+# ![](images/sabretools-rect.png)
 
-<h3>Introduction</h3>
+[![Build status](https://ci.appveyor.com/api/projects/status/c3hsfpmqhg40al35/branch/master?svg=true)](https://ci.appveyor.com/project/mnadareski/sabretools/branch/master)
 
-This project started as a desktop port of some core features of Wizard of DATz Redux, but it has since grown into a fully-featured DAT management tool. Below is a brief description of the features available in the suite. For more information about each feature, see the help text in each of the programs. For more information about the parent project, see <a href="https://github.com/mnadareski/wizzardRedux">here</a>.
+## Introduction
 
-<h3>Features</h3>
+The SabreTools project started as a desktop port of some core features of Wizard of DATz Redux, but it has since grown into a fully-featured DAT management tool. Below is a brief description of the features available in the suite. For more information about each feature, see the help text in each of the programs. For more information about the parent project, see [here](https://github.com/SabreTools/wizzardRedux).
 
-Currently, the SabreTools suite consists of the following programs:
+> "tbh...  i have no real idea what sabretools is xD. my best guess  some prehistoric sort of swiss army knife" - **Executer**
 
-<!--
-<b>SabreTools UI</b>
-<p/>
-A bare-bones attempt at providing a true GUI experience for the SabreTools suite. Currently only provides the following functions:
-<ul>
-	<li>Importing and Generating DAT files in ClrMamePro and XML formats</li>
-</ul>
-This tool is not recommended for any usage.
--->
+## Features
 
-<b>SabreTools</b> (formerly <i>DATabase</i>)
-<p/>
-The main tool of the SabreTools suite. Performs the majority of the core features of the parent project, including the following:
-<ul>
-	<li>Importing and Generating DAT files in ClrMamePro and XML formats (current version formerly <i>DATabaseTwo</i>)</li>
-	<li>Create a DAT from a file, a folder, or a set of either (formerly <i>DATFromDir</i>)</li>
-	<li>Converting DATs from any format to ClrMamePro, Logiqx XML, SabreDAT XML, and to missfile (last part formerly <i>DatToMiss</i>; requested by Obiwantje)</li>
-	<li>Trim DAT entries and optionally merge into a single game (formerly <i>SingleGame</i>; requested by Kludge)</li>
-	<li>Split a DAT using two different file extensions within the DAT (formerly <i>DatSplit</i>)</li>
-	<li>Split a DAT or folder of DATs by best available hash or nodump (formerly <i>HashSplit</i>, requested by Obiwantje)</li>
-	<li>Merge, diff, and dedupe an arbitrary number of DAT files, as long as it's two or more (formerly <i>MergeDAT</i>; requested by Obiwantje and Kludge)
-		<ul>
-			<li>Read in from commandline, drag-and-drop, a directory, or any combination</li>
-			<li>Roms are compared with all information available, so duplicates can exist in the output</li>
-			<li>Output type automatically determined by the first input file</li>
-			<li>Optionally create a DiffDat of the inputted files instead of a straight merge</li>
-			<li>Optionally merge the output DAT so no partial duplicates are included</li>
-		</ul>
-	</li>
-	<li>Get various statistics on a DAT or folder of DATs including number of roms, disks, and even total size in a human readable format (formerly <i>UncompressedSize</i>; additions requested by Obiwantje)</li>
-	<li>Filter a DAT by any criteria that the user chooses including wildcard searches (formerly <i>Filter</i>, requested by Obiwantje and others)</li>
-	<li>Take a current merged DAT, a current missing DAT, and a new merged DAT and get all new files, files to remove, and a new missing DAT. Optionally set all hash values to 0-byte equivalents for rom managers (formerly <i>OfflineMerge</i>, requested by Obiwantje)</li>
-	<li>Add and remove sources and systems from the database</li>
-	<li>Retrieve a list of all sources and systems that are available</li>
-</ul>
+For the most complete set of information, see the [README.1ST](https://raw.githubusercontent.com/SabreTools/SabreTools/master/SabreTools.Library/README.1ST) file. Currently, the SabreTools suite consists of the following programs:
+
+### SabreTools / SabreTools.Library
+
+As the core of the SabreTools suite, the C# library provides nearly all of the functionality, while the main executable acts as a reference implementation. Below is a list of features included in the library and exposed though the executable:
+
+* **Dir2DAT / DATFromDir** - Create a DAT from a file, folder, or mix of both
+	* Archives and files can be filtered selectively
+	* Archives and CHDs can be treated like files, that is, it will get an external hash only
+	* Multiple input archive formats are supported: 7zip, GZip, RAR, TAR, and ZIP/ZIP64
+	* Multiple hashing algorithms available, up to SHA-512
+	* Created DATs can be output in multiple formats at once, including ClrMamePro, Logiqx XML, and RomCenter
+	* All DAT fields can be set for the output
+	* Files with copier headers can be checked for additional hashes
+* **DAT Conversion** - Convert DATs between numerous formats, including standards such as ClrMamePro, Logiqx XML, and RomCenter
+	* Converted DATs can be output in multiple formats at once
+	* Filtering can be done on all DATs based on criteria such as item type, sizes, hashes, and names
+	* Input DATs can optionally be merged and diffed with each other
+	* All DAT fields can be updated during the conversion
+* **DAT Splitting** - Split DATs based on multiple different criteria
+	* Split by user-defined extensions into two DATs
+	* Split by best-available hash, e.g. SHA-1
+	* Split a SuperDAT on the lowest available directory level
+	* Split by DAT item types
+* **DAT Statistics** - Get statistics on a DAT or folder of DATs
+	* Includes items such as rom and game counts
+	* Includes the total uncompressed size of all items
+	* Optionally includes statistics on individual DATs in a folder
+	* Reports can be output in standard text, CSV, and/or HTML formats
+* **Extract and Restore Copier Headers** - Extract and store or restore from DB copier headers
+	* Supports copier headers from the following systems:
+		* Atari 7800
+		* Atari Lynx
+		* Commodore 64 PSID music
+		* NEC PC-Engine / TurboGrafx 16
+		* Nintendo Famicom Disk System
+		* Nintendo Entertainment System / Famicom
+		* Super Nintendo Entertainment System / Super Famicom
+		* Super Nintendo Entertainment System / Super Famicom SPC music
+	* Stores the header information linked to unheadered hash
+* **Rebuild From DAT** - Act as a simple rebuilder for files
+	* Two options for rebuild origin: standard folder and Romba depot
+	* Multiple output formats: unarchived, TAR, TorrentZip, 7zip, XZ, TorrentGZ
+	* Can rebuild from multiple DATs at the same time
+	* Cross-check with multiple hashing algorithms, up to SHA-512
+	* Can output a fixdat based on the rebuilt files
+	* CHDs can be rebuilt either to folders or to TorrentGZ archives
+* **Verify From DAT** - Act as a simple verifier for files
+	* Two options for verification target: standard folder and Romba depot
+	* Exact verification and hash-only verification both available
+	* Can verify from multiple DATs at the same time
+	* Cross-check with mutliple hashing algorithms, up to SHA-512
+	* CHDs can be treated like files
+
 This tool has a comprehensive list of command line parameters that can be used to do the above and much more.
 
-<b>Headerer</b>
-<p/>
-A simple auxilary tool that detects and removes headers and also restores headers for the following systems:
-<ul>
-	<li>Atari 7800</li>
-	<li>Atari Lynx</li>
-	<li>Commodore 64 PSID music</li>
-	<li>NEC PC-Engine / TurboGrafx 16</li>
-	<li>Nintendo Famicom Disk System</li>
-	<li>Nintendo Entertainment System / Famicom</li>
-	<li>Super Nintendo Entertainment System / Super Famicom</li>
-	<li>Super Nintendo Entertainment System / Super Famicom SPC music</li>
-</ul>
-The saved headers are currently stored in a database; multiple headers allowed per file.
+### RombaSharp
 
-<b>SimpleSort</b>
-<p/>
-A simple rebuild-from-DAT tool that allows users to sort from the commandline.
-<ul>
-	<li>Rebuild from multiple sources</li>
-	<li>Single DAT and output directory support</li>
-	<li>Header skipper support</li>
-</ul>
+An in-progress tool that will try to act as a C# port of the Go-based [Romba](https://github.com/uwedeportivo/romba/) program. All features that are not already a part of SabreTools will be attempted to be added to this program. It is NOT ready for use yet. For any inquiries into the full features of this tool, please contact the project.
 
-<h3>Power User Tools</h3>
+## Builds
 
-This section is for tools that have been requested for a highly specific purpose and are not generally going to be used by regular users. All of them have a possibility of being included in the main DATabase program eventually.
+Last stable releases can be found on [the Releases tab](https://github.com/SabreTools/SabreTools/releases).
 
-<b>There are no standalone tools that are for power users at this time.</b>
+Latest unstable builds can be found on [AppVeyor](https://ci.appveyor.com/project/mnadareski/sabretools/branch/master).
 
-<h3>Licensing</h3>
-<p/>
-The preceeding programs use, in part or in whole, code, libraries, and/or applications from the <a href="www.7-zip.org">7-zip project</a>. 7-zip is licenced under the GNU LGPL.<br/>
+For older test versions, please see the old [MEGA link](https://mega.nz/#F!8JUhWZxT!h4DnCsgcBsMH3RRDKv27CA). Note that older test versions had wonky naming, didn't always include all variants, and may be feature incomplete or not working at all.
+
+## Licensing
+
+The preceding programs use, in part or in whole, code, libraries, and/or applications from the [7-zip project](http://www.7-zip.org). 7-zip is licensed under the GNU LGPL.
+
+The preceding programs use, in part or in whole, code, libraries, and/or applications from [DotNetSharp](https://dotnetzip.codeplex.com). DotNetSharp is licensed under the Microsoft Public License of October 2006.
+
 All other external code is marked as such within the source and correctly attributed to the site and/or person(s) that originally wrote the code.
+
 All code written by project members is licensed under GPL v3. See LICENSE for more details.
 
-<h3>Contributions</h3>
+## Contributions
 
 Any feature suggestions or code contributions are accepted. Please take the time to look over the existing code to see proper coding and documentation patterns.
+
+Contributors are attributed in the code and in the README.

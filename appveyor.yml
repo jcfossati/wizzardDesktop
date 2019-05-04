@@ -1,0 +1,37 @@
+# version format
+version: 1.0.0-test_{build}
+
+# vm template
+image: Visual Studio 2017
+
+# environment variables
+environment:
+  EnableNuGetPackageRestore: true
+
+# msbuild configuration
+platform:
+- x64
+configuration:
+- Debug
+- Mono
+
+# install dependencies
+install:
+- ps: appveyor DownloadFile https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
+
+# pre-build script
+before_build:
+- nuget restore
+
+# build step
+build:
+  verbosity: minimal
+
+# post-build step
+after_build:
+- 7z a sabretools_%CONFIGURATION%-%PLATFORM%.zip SabreTools/bin/*
+
+# artifact linking
+artifacts:
+- path: sabretools_$(configuration)-$(platform).zip
+  name: SabreTools ($(platform))

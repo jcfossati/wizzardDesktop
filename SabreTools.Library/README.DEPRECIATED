@@ -1,0 +1,660 @@
+Removed Commands
+
+In this section, there is a list of commands that have been retired and will no longer work.
+One thing to note is that not all commands will have a full description and are often copied
+from the original help text from the program. Also worth noting is that some of them were used
+in conjuction with other flags that may still exist and are thus not listed below.
+
+Below are originally from DATabaseTwo (Standalone) -
+
+	-h, -?, --help	Show this help dialog
+	-g, --generate	Start tool in generate mode
+	-ga, --generate-all	Start tool in generate all mode
+	-i, --ignore		Don't prompt for new sources
+	-lsy, --list-systems	List all systems (id <= name)
+	-nr, --no-rename	Don't auto-rename games by source/system
+	-o, --old		Output DAT in CMP format instead of XML
+	-sys=, --system=	System ID to generate from
+
+Below are originally from DATFromDir (Standalone) -
+
+	-h, -?, --help	Show this help dialog
+	-m, --noMD5			Don't include MD5 in output
+	-nm, --noMD5		Don't include MD5 in output
+	-ns, --noSHA1		Don't include SHA1 in output
+	-b, --bare		Don't include date in file name
+	-u, --unzip		Force unzipping in created DAT
+	-f, --files		Treat archives as files
+	-o, --old		Output DAT in CMP format instead of XML
+	-gz, --gz-files	Allow reading of GZIP files as archives
+	-ro, --romba		Read files from a Romba input
+	-n=, --name=		Set the internal name of the DAT
+	-d=, --desc=		Set the filename and description of the DAT
+	-c=, --cat=		Set the category of the DAT
+	-v=, --version=	Set the version of the DAT
+	-au=, --author=	Set the author of the DAT
+	-sd, --superdat	Enable SuperDAT creation
+	-t=, --temp=		Set the temporary directory to use
+	
+Below are originally from DatToMiss (Standalone) -
+
+	-h, -?, --help	Show this help dialog
+	-l, --log		Enable log to file
+	-r, --roms		Output roms to miss instead of sets
+	-pre=, --prefix=	Set prefix to be printed in front of all lines
+	-post=, --postfix=	Set postfix to be printed behind all lines
+	
+Below are originally from Filter (Standalone) -
+
+	-h, -?, --help	Show this help dialog
+	-out=, --out=		Output directory
+	-gn=, --game-name=	Game name to be filtered on
+	-rn=, --rom-name=	Rom name to be filtered on
+	-rt=, --rom-type=	Rom type to be filtered on
+	-sgt=, --greater=	Size greater than or equal to
+	-slt=, --less=	Size less than or equal to
+	-seq=, --equal=	Size equal to
+	-crc=, --crc=		CRC to be filtered on
+	-md5=, --md5=		MD5 to be filtered on
+	-sha1=, --sha1=	SHA-1 to be filtered on
+	-nd, --nodump		Only match nodump roms
+	-nnd, --not-nodump	Exclude all nodump roms
+
+	Game name, Rom name, CRC, MD5, SHA-1 can do partial matches using asterisks as
+	follows (case insensitive):
+		*00 means ends with '00'
+		00* means starts with '00'
+		*00* means contains '00'
+		00 means exactly equals '00'
+		
+Below are originally from HashSplit (Standalone) -
+
+	-h, -?, --help	Show this help dialog
+	-out=			Output directory
+
+Below are originally from Headerer (Standalone) -
+
+	-?, -h, -help		Show the built-in help text
+		Built-in to most of the programs is a basic help text
+		
+	-e, -extract		Enable detect and remove mode
+		This mode allows the user to detect, store, and remove copier headers from a file
+		or folder of files. The headers are backed up and collated by the hash of the un-
+		headered file. Files are then output without the detected copier header alongside
+		the originals with the suffix .new. No input files are altered in the process.
+		
+	-r, -restore		Restore headers to file(s)
+		This mode uses stored copier headers and reapplies them to files if they match the
+		included hash. More than one header can be applied to a file, so they will be out-
+		put to new files, suffixed with .newX, where X is a number. No input files are
+		altered in the process.
+		
+Below are originally from MergeDAT / DiffDat (Standalone) -
+
+	-h, -?, --help	Show this help dialog
+	-l, --log		Enable log to file
+	-d, --diff		Switch to diffdat mode
+	-di, --diff		Switch to diffdat mode
+	-m, --merge		Enable deduping in the created DAT
+	-dd, --dedup		Enable deduping in the created DAT
+	-b, --bare		Don't include date in file name
+	-u, --unzip		Force unzipping in created DAT
+	-o, --old		Output DAT in CMP format instead of XML
+	-n=, --name=		Set the name of the DAT
+	-d=, --desc=		Set the description of the DAT
+	-c=, --cat=		Set the category of the DAT
+	-v=, --version=	Set the version of the DAT
+	-a=, --author=	Set the author of the DAT");
+		
+Below are originally from OfflineMerge (Standalone) -
+
+	-h, -?, --help	Show this help dialog
+		-f, --fake		Replace all hashes and sizes by the default
+		
+	-Inputs:
+		-com=			Complete current DAT
+		-fix=			Complete current Missing
+		-new=			New Complete DAT
+		com=			Complete current DAT
+		fix=			Complete current Missing
+		new=			New Complete DAT
+		
+	This program will output the following DATs:
+		(a) Net New - (NewComplete)-(Complete)
+		(b) Unneeded - (Complete)-(NewComplete)
+		(c) New Missing - (Net New)+(Missing-(Unneeded))
+		(d) Have - (NewComplete)-(New Missing)
+			OR (Complete or NewComplete)-(Missing) if one is missing");
+
+Below are originally from SabreTools / DATabase -
+
+	-a, --add			Add a new system or source to the database
+		Add a new system or source to the DAT database, including additional information.
+		
+		manu=			Manufacturer name (system only)
+		system=			System name (system only)
+		source=			Source name (source only)
+		url=			URL (source only)
+		
+		-manu=				Manufacturer name
+			Used only when adding a system to the database
+		
+		-system=			System name
+			Used only when adding a system to the database
+		
+		-source=			Source name
+			Used only when adding a source to the database
+		
+		-url=				Source URL
+			Used only when adding a source to the database
+			
+	-ad, --all-diff	Enable output of all diff variants
+
+	-c=, --cat=		Set the category of the DAT
+			
+	-cc, --convert-cmp	Convert any DAT to CMP
+		-clean			Clean game names according to WoD standards
+		-out=			Output directory
+		out=			Output directory
+		
+	-cv, --convert		Enable conversion of input files to unarchived folders
+		Using a folder or set of folders, rebuild to another folder.
+		
+		-dat=				Name of the DAT to be used as a filter
+			A supplied DAT file to be used as a filter in conversion. If a file is found in the
+			DAT, it will be skipped on output. This allows convert to act like an anti-sort,
+			useful for finding useless files in an input folder.
+			
+		-out=			Set the name of the output directory
+			This sets an output folder to be used when the files are created. If a path
+			is not defined, the application directory is used instead.
+			
+		-t=, --temp=		Set the name of the temporary directory
+			Optionally, a temp folder can be supplied in the case the default temp directory
+			(inside the running folder) is not preferred. This is used for any operations
+			that require an archive to be extracted.
+			
+		-del, --delete		Delete input files
+			This is a WIP flag that allows for deletion of input files once they have been
+			rebuilt. It is not recommended for normal use because it does not discriminate
+			whether or not the input files were rebuilt or not before deletion
+		
+		-t7z				Enable Torrent 7zip output [NOT IMPLEMENTED]
+			Instead of ouputting the files to folder, files will be rebuilt to Torrent7Zip (T7Z)
+			files. This format is based on the LZMA container format 7zip, but with custom header
+			information. This is currently unused by any major application.
+			
+		-tar				Enable Tape ARchive output [NOT IMPLEMENTED]
+			Instead of outputting the fiels to folder, files will be rebuilt to Tape ARchive (TAR)
+			files. This format is a standardized storage archive without any compression, usually
+			used with other compression formats around it. It is widely used in backup applications
+			and source code archives.
+		
+		-tgz				Enable Torrent GZ output
+			Instead of outputting the files to folder, files will be rebuilt to TorrentGZ (TGZ)
+			files. This format is based on the GZip archive format, but with custom header
+			information and a file name replaced by the SHA-1 of the file inside. This is
+			primarily used by external tool Romba (https://github.com/uwedeportivo/romba), but
+			may be used more widely in the future.
+		
+			-r, --romba			Enable Romba depot directory output
+				As an extension of the parent flag, this outputs the TGZ files into directories
+				based on the structure used by Romba. This uses nested folders using the first
+				4 bytes of the SHA-1, 1 byte for each layer of the directory name. It also
+				includes two auxilary files, .romba_size and .romba_size.backup, that have the
+				compressed size of the folder inside for use with Romba.
+				
+		-tlrz				Enable Torrent Long-Range Zip output [NOT IMPLEMENTED]
+			Instead of ouputting the files to folder, files will be rebuilt to Torrent Long-Range
+			Zip (TLRZ) files. This format is based on the LRZip file format as defined at
+			https://github.com/ckolivas/lrzip but with custom header information. This is currently
+			unused by any major application.
+			
+		-trar				Enable Torrent RAR output [NOT IMPLEMENTED]
+			Instead of outputting files to folder, files will be rebuilt to Torrent RAR (TRAR)
+			files. This format is based on the RAR propietary format but with custom header
+			information. This is currently unused by any major application;
+			
+		-txz				Enable Torrent XZ output [NOT IMPLEMENTED]
+			Instead of outputting files to folder, files will be rebuilt to Torrent XZ (TXZ) files.
+			This format is based on the LZMA container format XZ, but with custom header
+			information. This is currently unused by any major application;
+			
+		-tzip				Enable Torrent Zip output
+			Instead of ouputting files to folder, files will be rebuilt to TorrentZip (TZ) files.
+			This format is based on the ZIP archive format, but with custom header information.
+			This is primarily used by external tool RomVault (http://www.romvault.com/) and is
+			already widely used.
+				
+		-7z={0}				Set scanning level for 7z archives
+		-gz={2}				Set scanning level for GZip archives
+		-rar={2}			Set scanning level for RAR archives
+		-zip={0}			Set scanning level for ZIP archives
+			For each of the major archive types recognized by the libraries used by this
+			program, scan the archive in one of the following ways:
+				0	Hash both archive and its contents
+				1	Only hash contents of the archive
+				2	Only hash archive itself (treat like a regular file)
+	
+	-cm, --convert-miss	Convert from DAT to miss
+		-r, --roms		Output roms to miss instead of sets
+		-gp, --game-prefix	Add game name as a prefix to each item
+		-pre=, --prefix=	Set prefix to be printed in front of all lines
+		-post=, --postfix=	Set postfix to be printed behind all lines
+		-q, --quotes		Put double-quotes around each item
+		-ae=, --add-ext=	Add an extension to each item
+		-re=, --rep-ext=	Replace all extensions with specified
+		-ro, --romba		Output roms in Romba format (requires SHA-1)
+		-tsv, --tsv		Output roms in Tab-Separated Value format
+	-cs, --convert-sd	Convert any DAT to SabreDAT
+		-clean			Clean game names according to WoD standards
+		-out=			Output directory
+	-cr, --convert-rc	Convert any DAT to RomCenter
+		-clean			Clean game names according to WoD standards
+		-out=			Output directory
+	-cr, --convert-rv	Convert an XML DAT to RV
+		out=			Output directory
+	-cx, --convert-xml	Convert a RV DAT to XML
+		out=			Output directory
+	-cx, --convert-xml	Convert any DAT to XML
+		-clean			Clean game names according to WoD standards
+		-out=			Output directory
+		out=			Output directory
+		
+	-d=, --desc=		Set the description of the DAT
+		Set the description for the output DAT(s) [default is the folder name]
+	
+	-dp, -dfdp		Create a DAT from each input directory using parallel code
+		Create a DAT file from an input directory or set of files. By default, this will
+		output a DAT named based on the input directory and the current date. It will also
+		treat all archives as possible games and add all three hashes for each file.
+		
+		-nm, -noMD5		Don't include MD5 in output
+			This allows the user to skip calculating the MD5 for each of the files which will
+			speed up the creation of the DAT.
+			
+		-ns, -noSHA1		Don't include SHA1 in output
+			This allows the user to skip calculating the SHA-1 for each of the files which will
+			speed up the creation of the DAT.
+			
+		-b, -bare			Don't include date in file name
+			Normally, the DAT will be created with the date in the file name. This flag removes
+			that but keeps the date tag intact.
+			
+		-u, -unzip			Force unzipping in created DAT
+			This sets the 'forcepacking="unzip"' flag in the outputted DAT. When used with a
+			file manager that allows for it, this will force the outputted files to be in
+			subdirectories instead of archives.
+			
+		-f, -files			Treat archives as files
+			Instead of trying to enumerate the files within archives, treat the archives as
+			files themselves. This is good for uncompressed sets that include archives that
+			should be read as-is.
+			
+		-oc, --output-cmp	Output in CMP format
+			Add outputting the created DAT to clrmamepro format
+			
+		-om, --output-miss	Output in Missfile format
+			Add outputting the created DAT to GoodTools miss format
+			
+		-omd5, --output-md5	Output in MD5 format
+			Add outputting the created DAT to MD5 format
+			
+		-or, --output-rc	Output in RomCenter format
+			Add outputting the created DAT to RomCenter format
+			
+		-os, --output-sd	Output in SabreDAT format
+			Add outputting the created DAT to SabreDAT XML format
+			
+		-osfv, --output-sfv	Output in SFV format
+			Add outputting the created DAT to SFV format
+			
+		-osha1, -output-sha1	Output in SHA-1 format
+			Add outputting the created DAT to SHA1 format
+			
+		-ox, -output-xml	Output in Logiqx XML format (default)
+			Add outputting the created DAT to Logiqx XML format
+		
+		-gz, -gz-files		Allow reading of GZIP files as archives
+			Since GZip files are not commonly used for file storage, this flag allows for
+			any GZip archives to have their contents hashed instead.
+			
+		-ro, -romba		Read files from a Romba input
+			Allow for reading of GZipped files as if they were from a Romba depot. This
+			implies that the files will be in the TorrentGZ format as well, including
+			naming convention.
+			
+		-f=, -filename=	Set the external name of the DAT
+			Set the base filename for the output DAT(s) [default is folder name plus date]
+			
+		-n=, -name=		Set the internal name of the DAT
+			Set the internal name for the output DAT(s) [default is folder name plus date]
+			
+		-de=, -desc=		Set the description of the DAT
+			Set the description for the output DAT(s) [default is the folder name]
+			
+		-c=, -cat=		Set the category of the DAT
+			Set the category for the output DAT(s) [default is blank]
+			
+		-v=, -version=		Set the version of the DAT
+			Set the version for the output DAT(s) [default is blank]
+			
+		-au=, -author=		Set the author of the DAT
+			Set the author for the output DAT(s) [default is blank]
+			
+		-sd, -superdat		Enable SuperDAT creation
+			Set the type flag to "SuperDAT" for the output DAT as well as preserving the
+			directory structure of the inputted folder, if applicable
+			
+		-t=, -temp=		Set the name of the temporary directory
+			Optionally, a temp folder can be supplied in the case the default temp directory
+			(inside the running folder) is not preferred. This is used for any operations
+			that require an archive to be extracted.
+			
+		-mt={4}			Amount of threads to use
+			Optionally, set the number of threads to use for the multithreaded operations.
+			The default is 4 threads; -1 means unlimited threads created.
+	
+	exta=			First extension to split by
+	extb=			Second extension to split by
+	
+	-f, --filter		Filter DATs by inputted criteria
+		-out=, --out=		Output directory
+		-gn=, --game-name=	Game name to be filtered on
+		-rn=, --rom-name=	Rom name to be filtered on
+		-rt=, --rom-type=	Rom type to be filtered on
+		-sgt=, --greater=	Size greater than or equal to
+		-slt=, --less=		Size less than or equal to
+		-seq=, --equal=		Size equal to
+		-crc=, --crc=		CRC to be filtered on
+		-md5=, --md5=		MD5 to be filtered on
+		-sha1=, --sha1=		SHA-1 to be filtered on
+		-nd, --nodump		Only match nodump roms
+		-nnd, --not-nodump	Exclude all nodump roms
+	
+	-g, -generate		Start tool in generate mode
+		This starts the tool in DATabase generate mode. This will allow for creation of
+		managed DATs based on the inputted systems and sources as defined by other flags.
+		
+		-system=			Comma-separated list of system IDs
+		-source=			Comma-separated list of source IDs
+		-out=			Output directory
+		
+		-system=		System ID to generate from
+			Set the system ID to be used to create an output DAT
+			
+		-nr, -no-rename	Don't auto-rename games
+			By default, games are automatically renamed with the source (for system-derived
+			DATs), system (for source-derived DATs), or both (for the complete merged DAT).
+			This flag disables the automatic renaming and uses the game names as they are.
+			
+		-o, -old		Output DAT in CMP format instead of XML
+			As a holdover from only two output formats, this tool defaults to Logiqx XML
+			DAT outputs. If this flag is enabled, a clrmamepro DAT will be created instead.
+			
+	-ga, -generate-all	Start tool in generate all mode
+		This starts the tool in DATabase generate all mode. This will allow for creation of
+		managed DATs based on the entire DAT folder.
+			
+		-nr, -no-rename	Don't auto-rename games
+			By default, games are automatically renamed with the source (for system-derived
+			DATs), system (for source-derived DATs), or both (for the complete merged DAT).
+			This flag disables the automatic renaming and uses the game names as they are.
+			
+		-o, -old		Output DAT in CMP format instead of XML
+			As a holdover from only two output formats, this tool defaults to Logiqx XML
+			DAT outputs. If this flag is enabled, a clrmamepro DAT will be created instead.
+			
+		-old, --romvault	Produce a DAT in RV format
+		
+	-hd, --headerer 		Backup or restore copier headers from a variety of file types
+		Headerer is meant as an intermediary between header skipper files (which, a bit
+		apart from their name, do not just show how to skip copier headers) and rom managers
+		that do not use them.
+		
+		By default, this will detect, store, and remove copier headers from a file or folder
+		of files. The headers are backed up and collated by the hash of the unheadered file.
+		Files are then output without the detected copier header alongside the originals with
+		the suffix .new. No input files are altered in the process.
+
+		The following systems have headers that this program can work with:
+			- Atari 7800
+			- Atari Lynx
+			- Commodore PSID Music
+			- NEC PC-Engine / TurboGrafx 16
+			- Nintendo Famicom / Nintendo Entertainment System
+			- Nintendo Famicom Disk System
+			- Nintendo Super Famicom / Super Nintendo Entertainment System
+			- Nintendo Super Famicom / Super Nintendo Entertainment System SPC Music
+			
+		-re, --restore		Restore headers to file(s)
+			Instead of the default extraction, this flag enables use of stored copier headers
+			to reapply them to files if they match the included hash. More than one header can
+			be applied to a file, so they will be output to new files, suffixed with .newX,
+			where X is a number. No input files are altered in the process.
+			
+		-out=			Set the name of the output directory
+			This sets an output folder to be used when the files are created. If a path
+			is not defined, the application directory is used instead.
+			
+	-i, -import		Start tool in import mode
+		This starts the tool in DATabase import mode. This will allow for hashing of new
+		DAT files in the dats folder. If a source for the DAT cannot be automatically
+		determined, the user will be promted to select a source or enter a new one.
+		
+		-ig, -ignore		Don't prompt for new sources
+			If a source cannot be determined, then use the "Default" source instead of
+			asking the user.
+	
+	-l, --log		Enable logging of program output
+	
+	-lso, -list-sources	List all sources (id <= name)
+		List all sources in the database, ordered by the internal ID and mapped to the name
+		
+	-lsy, -list-systems	List all systems (id <= name)
+		List all systems in the database, ordered by the internal ID and mapped to the name
+		
+	-nd, --nodump		Include only match nodump roms
+	-nnd, --not-nodump	Exclude all nodump roms
+			These flags allow for filtering based on the nodump status in the source DAT(s)
+		
+	-ol, --offmerge		Update DATS for offline arrays
+			This is a power user tool for dealing with offline arrays, specifically creating
+			have and miss lists without having to reconnect drives.
+			
+			This option will output the following DATs based on the inputs as defined below:
+				(a) Net New = (New Complete)-(Current Complete)
+				(b) Unneeded (Current Complete)-(New Complete)
+				(c) New Missing (Net New)+(Current Missing-(Unneeded))
+				(d) Have (New Complete)-(New Missing)
+					OR (Complete or NewComplete) (Missing) if one is missing
+					
+			-com=			Complete current DAT
+				This is a merged and deduped DAT that includes all DATs that should be checked
+				
+			-fix=			Complete current Missing
+				This is a merged and deduped DAT that includes all fixdats representing missing
+				files
+				
+			-new=			New Complete DAT
+				This is a merged and deduped DAT that includes all current and updated DATs that
+				should be checked
+				
+			-fk, -fake		Replace all hashes and sizes by the default
+				For further offline management, this option will replace all hashes in the output
+				DATs to be their 0-byte equivalents. This allows for file managers to be used 
+				to still deal with the DATs without reconnecting the drives
+	
+	out=		Output directory
+	
+	-rm, -remove		Remove a system or source from the database
+		Remove a system or source to the DAT database so it can no longer be used
+		
+		-system=		System ID
+			Internal ID of the system to be removed
+			
+		-source=		Source ID
+			Internal ID of the source to be removed
+			
+	system=			Comma-separated list of system IDs
+	source=			Comma-separated list of source IDs
+			
+	-tm, --trim-merge	Consolidate DAT into a single game and trim entries
+		In the cases where files will have too long a name, this allows for trimming
+		the name of the files to the NTFS maximum length at most
+	
+		-rd=, --root-dir=	Set the root directory for trimming calculation
+			In the case that the files will not be stored from the root directory, 
+			a new root can be set for path length calculations
+		
+		-nr, --no-rename	Keep game names instead of using '!'
+			By default, this will rename games to a single "!" character. This flag enables
+			the original game names to be kept
+		
+		-df, --disable-force	Disable forceunzipping
+			By default, this will set the forcepacking="unzip" flag on the output DAT. This
+			flag disables this output
+			
+	-u, --unzip			Force unzipping in created DAT
+		This sets the 'forcepacking="unzip"' flag in the outputted DAT. When used with a
+		file manager that allows for it, this will force the outputted files to be in
+		subdirectories instead of archives.
+		
+Below are originally from SimpleSort (Standalone) -
+	
+	-?, -h, --help		Show the built-in help text
+		Built-in to most of the programs is a basic help text
+	
+	-dat=				Name of the DAT to be used for the various options
+		This DAT file is required for everything that SimpleSort currently does, so not
+		supplying one will result in an error. Depending on the additional flags that are
+		supplied, the DAT will be used differently, as described below. By default, the
+		DAT is used to check which files need to be rebuilt.
+		
+	-out=				Set the name of the output directory
+		This sets an output folder to be used by various parts of the program. As with the
+		DAT file, this input is used differently based on the flags that are supplied. By
+		default, the output folder is used as the target to rebuild files to.
+		
+	-t=, --temp=		Set the name of the temporary directory
+		Optionally, a temp folder can be supplied in the case the default temp directory
+		(inside the running folder) is not preferred. This is used for any operations that
+		require an archive to be extracted.
+		
+	-d, --delete		Enable deletion of the input files
+		Optionally, the input files, once processed, can be deleted. This can be useful
+		when the original file structure is no longer needed or if there is limited space
+		on the source drive.
+		
+	-qs, --quick		Enable quick scanning of archives
+		For all archives, if this flag is enabled, it will only use the header information
+		to get the archive entries' file information. The upside to this is that it is much
+		quicker than extracting all files to the temp folder. On the downside, it can only
+		get the CRC and size from most archive formats, leading to possible issues.
+		
+	-ad, --add-date		Write dates for each file parsed, if available
+		If this flag is set, the the date in the DAT will be used for the output file
+		instead of the standard date and time for TorrentZip. This will technically
+		invalidate the output files as proper TorrentZip files because the date will not
+		match the standard.
+		
+	-v, --verify		Enable verification of output directory
+		This overrides the default rebuilding and only requires the DAT and the output folder.
+		Here, the DAT is used to verify the output directory directly and then output a
+		simple FixDAT. This can be misleading, currently, because it only checks for exact
+		matches.
+		
+	-c, --convert		Enable filtering by input DAT
+		This overrides the default rebuilding by using the DAT as a filter of what not to
+		output. If no DAT is supplied, the entire input folder will be rebuild file-by-file
+		to the output folder.
+		
+	-tgz				Enable Torrent GZ output
+		Instead of outputting the files to ZIP archives, files will be rebuilt to TorrentGZ
+		(TGZ) files. This format is based on the GZip archive format, but with custom header
+		information and a file name replaced by the SHA-1 of the file inside. This is
+		primarily used by external tool Romba (https://github.com/uwedeportivo/romba), but
+		may be used more widely in the future.
+		
+		-r, --romba			Enable Romba depot directory output
+			As an extension of the parent flag, this outputs the TGZ files into directories
+			based on the structure used by Romba. This uses nested folders using the first
+			4 bytes of the SHA-1, 1 byte for each layer of the directory name. It also
+			includes two auxilary files, .romba_size and .romba_size.backup, that have the
+			compressed size of the folder inside for use with Romba.
+			
+	-tzip				Enable TorrentZip output
+		Instead of outputting the files to ZIP archives, files will be rebuilt to TorrentZip
+		(TZip) files. This format is based on the ZIP archive format, but with custom header
+		information. This is primarily used by external tool RomVault (http://www.romvault.com/)
+		and is already widely used.
+			
+	-do, --directory	Enable outputting files uncompressed
+		Instead of outputting the files to ZIP archives, files will be rebuilt to named
+		subdirectories within the output folder. This is useful for when the DAT does not
+		already have the flag specified.
+		
+	-h=, --header=		Remove headers from hash calculations
+		If this is set, then all files that have copier headers that are detected will
+		have them removed from the hash calculation. This will allow for a headered collection
+		to be hashed without possibly variant information. If a particular header skipper is
+		defined, and that skipper exists, then it will be used instead of trying to find one
+		that matches.
+		
+	-7z={0}				Set scanning level for 7z archives
+	-gz={2}				Set scanning level for GZip archives
+	-rar={2}			Set scanning level for RAR archives
+	-zip={0}			Set scanning level for ZIP archives
+		For each of the major archive types recognized by the libraries used by this
+		program, scan the archive in one of the following ways:
+			0	Hash both archive and its contents
+			1	Only hash contents of the archive
+			2	Only hash archive itself (treat like a regular file)
+			
+	-ud, --update-dat	Output updated DAT (rebuild only)
+		Once the files that were able to rebuilt are taken care of, a DAT of the files
+		that could not be matched will be output to the program directory.
+	
+Below are originally from SingleGame (Standalone) -
+
+	-r=rootdir		Set the directory name for path size
+	-rd=, --root-dir=		Set the directory name for path size
+	-l, --log			Enable logging to file
+	-nr, --no-rename		Disable single-game mode
+	-df, --disable-force	Disable forceunzipping
+	
+Below are originally from TGZConvert / TGZTest (Standalone) -
+
+	-?, -h, -help		Show the built-in help text
+		Built-in to most of the programs is a basic help text
+	
+	-out=				Set the name of the output directory
+		This sets an output folder to be used by when files are rebuilt. It also serves
+		as the base folder if Romba mode is enabled. See -romba for more details
+	
+	-t=, -temp=		Set the name of the temporary directory
+		Optionally, a temp folder can be supplied in the case the default temp directory
+		(inside the running folder) is not preferred. This is used for any operations that
+		require an archive to be extracted.
+	
+	-d, -delete		Enable deletion of the input files
+		Optionally, the input files, once processed, can be deleted. This can be useful
+		when the original file structure is no longer needed or if there is limited space
+		on the source drive.
+		
+	-r, -romba			Enable Romba depot directory output
+		Optionally, this outputs the TGZ files into directories based on the structure
+		used by Romba. This uses nested folders using the first 4 bytes of the SHA-1,
+		1 byte for each layer of the directory name. It also includes two auxilary
+		files, .romba_size and .romba_size.backup, that have the compressed size of the
+		folder inside for use with Romba.
+	
+	-7z={0}				Set scanning level for 7z archives
+	-gz={2}				Set scanning level for GZip archives
+	-rar={2}			Set scanning level for RAR archives
+	-zip={0}			Set scanning level for ZIP archives
+		For each of the major archive types recognized by the libraries used by this
+		program, scan the archive in one of the following ways:
+			0	Hash both archive and its contents
+			1	Only hash contents of the archive
+			2	Only hash archive itself (treat like a regular file)

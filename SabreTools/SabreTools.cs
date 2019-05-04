@@ -1,737 +1,818 @@
-﻿using SabreTools.Helper;
-using System;
+﻿using System;
 using System.Collections.Generic;
+
+using SabreTools.Library.Data;
+using SabreTools.Library.DatFiles;
+using SabreTools.Library.Help;
+using SabreTools.Library.Tools;
+
+#if MONO
 using System.IO;
+#else
+using Alphaleonis.Win32.Filesystem;
+#endif
 
 namespace SabreTools
 {
-	/// <summary>
-	/// Entry class for the DATabase application
-	/// </summary>
-	/// <remarks>
-	/// The following features are missing from DATabaseTwo with respect to the original DATabase:
-	/// - Source merging
-	/// - Custom DATs based on a system and a source
-	/// - Multi-source and multi-system DATs
-	/// 
-	/// The following features need to (want to) be implemented in DATabaseTwo for further stability
-	/// - Import updating file locations and names when SHA-1 hashes are matched
-	/// - True duplicate DATs being removed from the import folder (SHA-1 matches)
-	/// - Generate All only generating DATs that have been recently updated
-	///		+ This requires implementing a "last updated" data point for all DATs and tracking for "last generate" somewhere
-	/// - Impelement a ToSort folder for DATs that will place DATs in the correct subfolder on Import
-	/// </remarks>
-	public partial class SabreTools
-	{
-		// Private required variables
-		private static string _datroot = "DATS";
-		private static string _outroot = "Output";
-		private static string _dbName = "dats.sqlite";
-		private static string _connectionString = "Data Source=" + _dbName + ";Version = 3;";
+    /// <summary>
+    /// Entry class for the DATabase application
+    /// </summary>
+    /// TODO: Look into async read/write to make things quicker. Ask edc for help?
+    public partial class SabreTools
+    {
+        // Private required variables
+        private static Help _help;
 
-		private static Logger _logger;
+        /// <summary>
+        /// Entry class for the SabreTools application
+        /// </summary>
+        /// <param name="args">String array representing command line parameters</param>
+        public static void Main(string[] args)
+        {
+            // Perform initial setup and verification
+            Globals.Logger = new Logger(true, "sabretools.log");
 
-		/// <summary>
-		/// Start menu or use supplied parameters
-		/// </summary>
-		/// <param name="args">String array representing command line parameters</param>
-		public static void Main(string[] args)
-		{
-			// Perform initial setup and verification
-			_logger = new Logger(true, "database.log");
-			_logger.Start();
+            // Create a new Help object for this program
+            _help = SabreTools.RetrieveHelp();
 
-			// If output is being redirected, don't allow clear screens
-			if (!Console.IsOutputRedirected)
-			{
-				Console.Clear();
-			}
-			Setup();
+            // Get the location of the script tag, if it exists
+            int scriptLocation = (new List<string>(args)).IndexOf("--script");
 
-			// Credits take precidence over all
-			if ((new List<string>(args)).Contains("--credits"))
-			{
-				Build.Credits();
-				_logger.Close();
-				return;
-			}
+            // If output is being redirected or we are in script mode, don't allow clear screens
+            if (!Console.IsOutputRedirected && scriptLocation == -1)
+            {
+                Console.Clear();
+                Build.PrepareConsole("SabreTools");
+            }
 
-			// If there's no arguments, show help
-			if (args.Length == 0)
-			{
-				/*
-				// If there are no arguments, show the menu
-				if (!Console.IsOutputRedirected)
-				{
-					ShowMainMenu();
-				}
-				else
-				{
-					Build.Help();
-				}
-				*/
+            // Now we remove the script tag because it messes things up
+            if (scriptLocation > -1)
+            {
+                List<string> newargs = new List<string>(args);
+                newargs.RemoveAt(scriptLocation);
+                args = newargs.ToArray();
+            }
 
-				Build.Help();
-				_logger.Close();
-				return;
-			}
+            // Credits take precidence over all
+            if ((new List<string>(args)).Contains("--credits"))
+            {
+                _help.OutputCredits();
+                Globals.Logger.Close();
+                return;
+            }
 
-			// Set all default values
-			bool help = false,
-				add = false,
-				archivesAsFiles = false,
-				bare = false,
-				clean = false,
-				datfromdir = false,
-				datprefix = false,
-				dedup = false,
-				diff = false,
-				enableGzip = false,
-				extsplit = false,
-				fake = false,
-				forceunpack = false,
-				generate = false,
-				genall = false,
-				hashsplit = false,
-				ignore = false,
-				import = false,
-				inplace = false,
-				listsrc = false,
-				listsys = false,
-				merge = false,
-				noMD5 = false,
-				norename = false,
-				noSHA1 = false,
-				offlineMerge = false,
-				old = false,
-				outputCMP = false,
-				outputMiss = false,
-				outputRC = false,
-				outputSD = false,
-				outputXML = false,
-				quotes = false,
-				rem = false,
-				romba = false,
-				single = false,
-				softlist = false,
-				stats = false,
-				superdat = false,
-				trim = false,
-				tsv = false,
-				skip = false,
-				update = false,
-				usegame = true;
-			bool? cascade = null,
-				nodump = null;
-			long sgt = -1,
-				slt = -1,
-				seq = -1;
-			string addext = "",
-				author = "",
-				category = "",
-				comment = "",
-				crc = "",
-				currentAllMerged = "",
-				currentMissingMerged = "",
-				currentNewMerged = "",
-				date = "",
-				description = "",
-				email = "",
-				exta = "",
-				extb = "",
-				filename = "",
-				forcemerge = "",
-				forcend = "",
-				forcepack = "",
-				gamename = "",
-				header = "",
-				homepage = "",
-				name = "",
-				manu = "",
-				md5 = "",
-				outdir = "",
-				postfix = "",
-				prefix = "",
-				repext = "",
-				romname = "",
-				romtype = "",
-				root = "",
-				rootdir = "",
-				sha1 = "",
-				sources = "",
-				systems = "",
-				tempdir = "",
-				url = "",
-				version = "";
-			List<string> inputs = new List<string>();
+            // If there's no arguments, show help
+            if (args.Length == 0)
+            {
+                _help.OutputGenericHelp();
+                Globals.Logger.Close();
+                return;
+            }
 
-			// Determine which switches are enabled (with values if necessary)
-			foreach (string arg in args)
-			{
-				switch (arg)
-				{
-					case "-?":
-					case "-h":
-					case "--help":
-						help = true;
-						break;
-					case "-a":
-					case "--add":
-						add = true;
-						break;
-					case "-b":
-					case "--bare":
-						bare = true;
-						break;
-					case "-c":
-					case "--cascade":
-						cascade = true;
-						break;
-					case "-cc":
-					case "--convert-cmp":
-						outputCMP = true;
-						break;
-					case "-cm":
-					case "--convert-miss":
-						outputMiss = true;
-						break;
-					case "-cr":
-					case "--convert-rc":
-						outputRC = true;
-						break;
-					case "-cs":
-					case "--convert-sd":
-						outputSD = true;
-						break;
-					case "-cx":
-					case "--convert-xml":
-						outputXML = true;
-						break;
-					case "-clean":
-					case "--clean":
-						clean = true;
-						break;
-					case "-d":
-					case "--dfd":
-						datfromdir = true;
-						break;
-					case "-dd":
-					case "--dedup":
-						dedup = true;
-						break;
-					case "-di":
-					case "--diff":
-						diff = true;
-						break;
-					case "-es":
-					case "--ext-split":
-						extsplit = true;
-						break;
-					case "-f":
-					case "--files":
-						archivesAsFiles = true;
-						break;
-					case "-fk":
-					case "--fake":
-						fake = true;
-						break;
-					case "-g":
-					case "--generate":
-						generate = true;
-						break;
-					case "-ga":
-					case "--generate-all":
-						genall = true;
-						break;
-					case "-gp":
-					case "--game-prefix":
-						datprefix = true;
-						break;
-					case "-gz":
-					case "--gz-files":
-						enableGzip = true;
-						break;
-					case "-hs":
-					case "--hash-split":
-						hashsplit = true;
-						break;
-					case "-i":
-					case "--import":
-						import = true;
-						break;
-					case "-ig":
-					case "--ignore":
-						ignore = true;
-						break;
-					case "-ip":
-					case "--inplace":
-						inplace = true;
-						break;
-					case "-lso":
-					case "--list-sources":
-						listsrc = true;
-						break;
-					case "-lsy":
-					case "--list-systems":
-						listsys = true;
-						break;
-					case "-m":
-					case "--merge":
-						merge = true;
-						break;
-					case "-nd":
-					case "--nodump":
-						nodump = true;
-						break;
-					case "-nm":
-					case "--noMD5":
-						noMD5 = true;
-						break;
-					case "-nnd":
-					case "--not-nodump":
-						nodump = false;
-						break;
-					case "-nr":
-					case "--no-rename":
-						norename = true;
-						break;
-					case "-ns":
-					case "--noSHA1":
-						noSHA1 = true;
-						break;
-					case "-o":
-					case "--old":
-						old = true;
-						break;
-					case "-oc":
-					case "--output-cmp":
-						outputCMP = true;
-						break;
-					case "-ol":
-					case "--offmerge":
-						offlineMerge = true;
-						break;
-					case "-om":
-					case "--output-miss":
-						outputMiss = true;
-						break;
-					case "-or":
-					case "--output-rc":
-						outputRC = true;
-						break;
-					case "-os":
-					case "--output-sd":
-						outputSD = true;
-						break;
-					case "-ox":
-					case "--output-xml":
-						outputXML = true;
-						break;
-					case "-q":
-					case "--quotes":
-						quotes = true;
-						break;
-					case "-r":
-					case "--roms":
-						usegame = false;
-						break;
-					case "-rc":
-					case "--rev-cascade":
-						cascade = false;
-						break;
-					case "-rm":
-					case "--remove":
-						rem = true;
-						break;
-					case "-ro":
-					case "--romba":
-						romba = true;
-						break;
-					case "-sd":
-					case "--superdat":
-						superdat = true;
-						break;
-					case "-sf":
-					case "--skip":
-						skip = true;
-						break;
-					case "-si":
-					case "--single":
-						single = true;
-						break;
-					case "-sl":
-					case "--softlist":
-						softlist = true;
-						break;
-					case "-st":
-					case "--stats":
-						stats = true;
-						break;
-					case "-trim":
-						trim = true;
-						break;
-					case "-tsv":
-					case " --tsv":
-						tsv = true;
-						break;
-					case "-u":
-					case "--unzip":
-						forceunpack = true;
-						break;
-					case "-ud":
-					case "--update":
-						update = true;
-						break;
-					default:
-						string temparg = arg.Replace("\"", "").Replace("file://", "");
+            // User flags
+            bool addBlankFiles = false,
+                addFileDates = false,
+                archivesAsFiles = false,
+                basedat = false,
+                chdsAsFiles = false,
+                cleanGameNames = false,
+                copyFiles = false,
+                delete = false,
+                depot = false,
+                descAsName = false,
+                hashOnly = false,
+                individual = false,
+                inplace = false,
+                inverse = false,
+                noAutomaticDate = false,
+                nostore = false,
+                onlySame = false,
+                quickScan = false,
+                removeUnicode = false,
+                showBaddumpColumn = false,
+                showNodumpColumn = false,
+                shortname = false,
+                skipFirstOutput = false,
+                updateDat = false;
+            Hash omitFromScan = Hash.DeepHashes; // TODO: All instances of Hash.DeepHashes should be made into 0x0 eventually
+            OutputFormat outputFormat = OutputFormat.Folder;
+            ReplaceMode replaceMode = ReplaceMode.None;
+            SkipFileType skipFileType = SkipFileType.None;
+            SplittingMode splittingMode = SplittingMode.None;
+            SplitType splitType = SplitType.None;
+            StatReportFormat statDatFormat = StatReportFormat.None;
+            UpdateMode updateMode = UpdateMode.None;
 
-						if (temparg.StartsWith("-ae=") || temparg.StartsWith("--add-ext="))
-						{
-							addext = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-au=") || temparg.StartsWith("--author="))
-						{
-							author = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-ca=") || temparg.StartsWith("--category="))
-						{
-							category = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-co=") || temparg.StartsWith("--comment="))
-						{
-							comment = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-com=") || temparg.StartsWith("--com="))
-						{
-							currentAllMerged = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-crc=") || temparg.StartsWith("--crc="))
-						{
-							crc = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-da=") || temparg.StartsWith("--date="))
-						{
-							date = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-de=") || temparg.StartsWith("--desc="))
-						{
-							description = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-em=") || temparg.StartsWith("--email="))
-						{
-							email = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-exta="))
-						{
-							exta = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-extb="))
-						{
-							extb = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-f=") || temparg.StartsWith("--filename="))
-						{
-							filename = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-fix=") || temparg.StartsWith("--fix="))
-						{
-							currentMissingMerged = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-fm=") || temparg.StartsWith("--forcemerge="))
-						{
-							forcemerge = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-fn=") || temparg.StartsWith("--forcend="))
-						{
-							forcend = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-fp=") || temparg.StartsWith("--forcepack="))
-						{
-							forcepack = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-gn=") || temparg.StartsWith("--game-name="))
-						{
-							gamename = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-h=") || temparg.StartsWith("--header="))
-						{
-							header = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-hp=") || temparg.StartsWith("--homepage="))
-						{
-							homepage = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-input="))
-						{
-							inputs.Add(temparg.Split('=')[1]);
-						}
-						else if (temparg.StartsWith("-manu=") && manu == "")
-						{
-							manu = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-md5=") || temparg.StartsWith("--md5="))
-						{
-							md5 = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-n=") || temparg.StartsWith("--name="))
-						{
-							name = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-new=") || temparg.StartsWith("--new="))
-						{
-							currentNewMerged = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-out=") || temparg.StartsWith("--out="))
-						{
-							outdir = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-post=") || temparg.StartsWith("--postfix="))
-						{
-							postfix = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-pre=") || temparg.StartsWith("--prefix="))
-						{
-							prefix = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-r=") || temparg.StartsWith("--root="))
-						{
-							rootdir = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-rd=") || temparg.StartsWith("--root-dir="))
-						{
-							root = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-re=") || temparg.StartsWith("--rep-ext="))
-						{
-							repext = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-rn=") || temparg.StartsWith("--rom-name="))
-						{
-							romname = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-rt=") || temparg.StartsWith("--rom-type="))
-						{
-							romtype = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-seq=") || temparg.StartsWith("--equal="))
-						{
-							if (!Int64.TryParse(temparg.Split('=')[1], out seq))
-							{
-								seq = -1;
-							}
-						}
-						else if (temparg.StartsWith("-sgt=") || temparg.StartsWith("--greater="))
-						{
-							if (!Int64.TryParse(temparg.Split('=')[1], out sgt))
-							{
-								sgt = -1;
-							}
-						}
-						else if (temparg.StartsWith("-sha1=") || temparg.StartsWith("--sha1="))
-						{
-							sha1 = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-slt=") || temparg.StartsWith("--less="))
-						{
-							if (!Int64.TryParse(temparg.Split('=')[1], out slt))
-							{
-								slt = -1;
-							}
-						}
-						else if (temparg.StartsWith("-source=") && sources == "")
-						{
-							sources = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-system=") && systems == "")
-						{
-							systems = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-t=") || temparg.StartsWith("--temp="))
-						{
-							tempdir = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-u=") || temparg.StartsWith("--url="))
-						{
-							url = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-url=") && url == "")
-						{
-							url = temparg.Split('=')[1];
-						}
-						else if (temparg.StartsWith("-v=") || temparg.StartsWith("--version="))
-						{
-							version = temparg.Split('=')[1];
-						}
-						else if (File.Exists(temparg) || Directory.Exists(temparg))
-						{
-							inputs.Add(temparg);
-						}
-						else
-						{
-							_logger.Error("Invalid input detected: " + arg);
-							Console.WriteLine();
-							Build.Help();
-							_logger.Close();
-							return;
-						}
-						break;
-				}
-			}
+            // User inputs
+            int gz = 1,
+                rar = 1,
+                sevenzip = 1,
+                zip = 1;
+            long radix = 0;
+            string outDir = null,
+                tempDir = "";
+            DatHeader datHeader = new DatHeader();
+            Filter filter = new Filter();
+            List<string> basePaths = new List<string>();
+            List<string> datfiles = new List<string>();
+            List<string> exta = new List<string>();
+            List<string> extb = new List<string>();
+            List<string> inputs = new List<string>();
+            List<Field> updateFields = new List<Field>();
 
-			// If help is set, show the help screen
-			if (help)
-			{
-				Build.Help();
-				_logger.Close();
-				return;
-			}
+            // Get the first argument as a feature flag
+            string feature = args[0];
 
-			// If more than one switch is enabled, show the help screen
-			if (!(add ^ datfromdir ^ extsplit ^ generate ^ genall ^ hashsplit ^ import ^ listsrc ^ listsys ^
-				(merge || diff || update || outputCMP || outputRC || outputSD || outputXML || outputMiss || trim) ^
-				offlineMerge ^ rem ^ stats))
-			{
-				_logger.Error("Only one feature switch is allowed at a time");
-				Build.Help();
-				_logger.Close();
-				return;
-			}
+            // Verify that the flag is valid
+            if (!_help.TopLevelFlag(feature))
+            {
+                Globals.Logger.User("'{0}' is not valid feature flag", feature);
+                _help.OutputIndividualFeature(feature);
+                Globals.Logger.Close();
+                return;
+            }
 
-			// If a switch that requires a filename is set and no file is, show the help screen
-			if (inputs.Count == 0 && (update || outputMiss || outputCMP || outputRC || outputSD
-				|| outputXML || extsplit || hashsplit || datfromdir || (merge || diff) || stats || trim))
-			{
-				_logger.Error("This feature requires at least one input");
-				Build.Help();
-				_logger.Close();
-				return;
-			}
+            // Now get the proper name for the feature
+            feature = _help.GetFeatureName(feature);
 
-			// Now take care of each mode in succesion
+            // If we had the help feature first
+            if (feature == "Help")
+            {
+                // If we had something else after help
+                if (args.Length > 1)
+                {
+                    _help.OutputIndividualFeature(args[1]);
+                    Globals.Logger.Close();
+                    return;
+                }
+                // Otherwise, show generic help
+                else
+                {
+                    _help.OutputGenericHelp();
+                    Globals.Logger.Close();
+                    return;
+                }
+            }
+            else if (feature == "Help (Detailed)")
+            {
+                // If we had something else after help
+                if (args.Length > 1)
+                {
+                    _help.OutputIndividualFeature(args[1], includeLongDescription: true);
+                    Globals.Logger.Close();
+                    return;
+                }
+                // Otherwise, show generic help
+                else
+                {
+                    _help.OutputAllHelp();
+                    Globals.Logger.Close();
+                    return;
+                }
+            }
 
-			// Import a file or folder
-			if (import)
-			{
-				InitImport(ignore);
-			}
+            // Now verify that all other flags are valid
+            for (int i = 1; i < args.Length; i++)
+            {
+                // Verify that the current flag is proper for the feature
+                if (!_help[feature].ValidateInput(args[i]))
+                {
+                    Globals.Logger.Error("Invalid input detected: {0}", args[i]);
+                    _help.OutputIndividualFeature(feature);
+                    Globals.Logger.Close();
+                    return;
+                }
 
-			// Generate a DAT
-			else if (generate)
-			{
-				InitImport(ignore);
-				InitGenerate(systems, norename, old);
-			}
+                // Special precautions for files and directories
+                if (File.Exists(args[i]) || Directory.Exists(args[i]))
+                {
+                    inputs.Add(args[i]);
+                }
+            }
 
-			// Generate all DATs
-			else if (genall)
-			{
-				InitImport(ignore);
-				InitGenerateAll(norename, old);
-			}
+            // Now loop through all inputs
+            Dictionary<string, Feature> features = _help.GetEnabledFeatures();
+            foreach (KeyValuePair<string, Feature> feat in features)
+            {
+                // Check all of the flag names and translate to arguments
+                switch (feat.Key)
+                {
+                    #region User Flags
 
-			// List all available sources
-			else if (listsrc)
-			{
-				ListSources();
-			}
+                    case "add-blank-files":
+                        addBlankFiles = true;
+                        break;
+                    case "add-date":
+                        addFileDates = true;
+                        break;
+                    case "archives-as-files":
+                        archivesAsFiles = true;
+                        break;
+                    case "baddump-column":
+                        showBaddumpColumn = true;
+                        break;
+                    case "base":
+                        basedat = true;
+                        break;
+                    case "base-replace":
+                        updateMode |= UpdateMode.BaseReplace;
+                        break;
+                    case "chds-as-Files":
+                        chdsAsFiles = true;
+                        break;
+                    case "copy-files":
+                        copyFiles = true;
+                        break;
+                    case "clean":
+                        cleanGameNames = true;
+                        break;
+                    case "dat-device-non-merged":
+                        splitType = SplitType.DeviceNonMerged;
+                        break;
+                    case "dat-full-non-merged":
+                        splitType = SplitType.FullNonMerged;
+                        break;
+                    case "dat-merged":
+                        splitType = SplitType.Merged;
+                        break;
+                    case "dat-non-merged":
+                        splitType = SplitType.NonMerged;
+                        break;
+                    case "dat-split":
+                        splitType = SplitType.Split;
+                        break;
+                    case "dedup":
+                        datHeader.DedupeRoms = DedupeType.Full;
+                        break;
+                    case "delete":
+                        delete = true;
+                        break;
+                    case "depot":
+                        depot = true;
+                        break;
+                    case "depreciated":
+                        // Remove the Logiqx standard output if this is included
+                        if ((datHeader.DatFormat & DatFormat.Logiqx) != 0)
+                        {
+                            datHeader.DatFormat &= ~DatFormat.Logiqx;
+                        }
+                        datHeader.DatFormat |= DatFormat.LogiqxDepreciated;
+                        break;
+                    case "description-as-name":
+                        descAsName = true;
+                        break;
+                    case "diff-against":
+                        updateMode |= UpdateMode.DiffAgainst;
+                        break;
+                    case "diff-all":
+                        updateMode |= UpdateMode.AllDiffs;
+                        break;
+                    case "diff-cascade":
+                        updateMode |= UpdateMode.DiffCascade;
+                        break;
+                    case "diff-duplicates":
+                        updateMode |= UpdateMode.DiffDupesOnly;
+                        break;
+                    case "diff-individuals":
+                        updateMode |= UpdateMode.DiffIndividualsOnly;
+                        break;
+                    case "diff-no-duplicates":
+                        updateMode |= UpdateMode.DiffNoDupesOnly;
+                        break;
+                    case "diff-reverse-cascade":
+                        updateMode |= UpdateMode.DiffReverseCascade;
+                        break;
+                    case "exclude-of":
+                        Globals.Logger.User("This flag '{0}' is depreciated, please use {1} instead", feat.Key, String.Join(", ", _excludeFieldListInput.Flags));
+                        datHeader.ExcludeFields[(int)Field.CloneOf] = true;
+                        datHeader.ExcludeFields[(int)Field.MachineType] = true;
+                        datHeader.ExcludeFields[(int)Field.RomOf] = true;
+                        datHeader.ExcludeFields[(int)Field.Runnable] = true;
+                        datHeader.ExcludeFields[(int)Field.SampleOf] = true;
+                        break;
+                    case "extension":
+                        splittingMode |= SplittingMode.Extension;
+                        break;
+                    case "game-dedup":
+                        datHeader.DedupeRoms = DedupeType.Game;
+                        break;
+                    case "game-prefix":
+                        datHeader.GameName = true;
+                        break;
+                    case "hash":
+                        splittingMode |= SplittingMode.Hash;
+                        break; 
+                    case "hash-only":
+                        hashOnly = true;
+                        break;
+                    case "individual":
+                        individual = true;
+                        break;
+                    case "inplace":
+                        inplace = true;
+                        break;
+                    case "inverse":
+                        inverse = true;
+                        break;
+                    case "keep-empty-games":
+                        datHeader.KeepEmptyGames = true;
+                        break;
+                    case "level":
+                        splittingMode |= SplittingMode.Level;
+                        break;
+                    case "match-of-tags":
+                        filter.IncludeOfInGame.Neutral = true;
+                        break;
+                    case "merge":
+                        updateMode |= UpdateMode.Merge;
+                        break;
+                    case "no-automatic-date":
+                        noAutomaticDate = true;
+                        break;
+                    case "nodump-column":
+                        showNodumpColumn = true;
+                        break;
+                    case "not-runnable":
+                        filter.Runnable.Neutral = false;
+                        break;
+                    case "no-store-header":
+                        nostore = true;
+                        break;
+                    case "one-rom-per-game":
+                        datHeader.OneRom = true;
+                        break;
+                    case "only-same":
+                        onlySame = true;
+                        break;
+                    case "quick":
+                        quickScan = true;
+                        break;
+                    case "quotes":
+                        datHeader.Quotes = true;
+                        break;
+                    case "remove-extensions":
+                        datHeader.RemoveExtension = true;
+                        break;
+                    case "remove-md5":
+                        Globals.Logger.User("This flag '{0}' is depreciated, please use {1} instead", feat.Key, String.Join(", ", _excludeFieldListInput.Flags));
+                        datHeader.ExcludeFields[(int)Field.MD5] = true;
+                        break;
+                    case "remove-sha1":
+                        Globals.Logger.User("This flag '{0}' is depreciated, please use {1} instead", feat.Key, String.Join(", ", _excludeFieldListInput.Flags));
+                        datHeader.ExcludeFields[(int)Field.SHA1] = true;
+                        break;
+                    case "remove-sha256":
+                        Globals.Logger.User("This flag '{0}' is depreciated, please use {1} instead", feat.Key, String.Join(", ", _excludeFieldListInput.Flags));
+                        datHeader.ExcludeFields[(int)Field.SHA256] = true;
+                        break;
+                    case "remove-sha384":
+                        Globals.Logger.User("This flag '{0}' is depreciated, please use {1} instead", feat.Key, String.Join(", ", _excludeFieldListInput.Flags));
+                        datHeader.ExcludeFields[(int)Field.SHA384] = true;
+                        break;
+                    case "remove-sha512":
+                        Globals.Logger.User("This flag '{0}' is depreciated, please use {1} instead", feat.Key, String.Join(", ", _excludeFieldListInput.Flags));
+                        datHeader.ExcludeFields[(int)Field.SHA512] = true;
+                        break;
+                    case "remove-unicode":
+                        removeUnicode = true;
+                        break;
+                    case "reverse-base-name":
+                        updateMode |= UpdateMode.ReverseBaseReplace;
+                        break;
+                    case "romba":
+                        datHeader.Romba = true;
+                        break;
+                    case "roms":
+                        datHeader.UseRomName = true;
+                        break;
+                    case "runnable":
+                        filter.Runnable.Neutral = true;
+                        break;
+                    case "scan-all":
+                        sevenzip = 0;
+                        gz = 0;
+                        rar = 0;
+                        zip = 0;
+                        break;
+                    case "scene-date-strip":
+                        datHeader.SceneDateStrip = true;
+                        break;
+                    case "short":
+                        shortname = true;
+                        break;
+                    case "size":
+                        splittingMode |= SplittingMode.Size;
+                        break;
+                    case "skip-archives":
+                        skipFileType = SkipFileType.Archive;
+                        break;
+                    case "skip-files":
+                        skipFileType = SkipFileType.File;
+                        break;
+                    case "skip-first-output":
+                        skipFirstOutput = true;
+                        break;
+                    case "skip-md5":
+                        omitFromScan |= Hash.MD5;
+                        break;
+                    case "skip-sha1":
+                        omitFromScan |= Hash.SHA1;
+                        break;
+                    case "skip-sha256":
+                        omitFromScan &= ~Hash.SHA256; // This needs to be inverted later
+                        break;
+                    case "skip-sha384":
+                        omitFromScan &= ~Hash.SHA384; // This needs to be inverted later
+                        break;
+                    case "skip-sha512":
+                        omitFromScan &= ~Hash.SHA512; // This needs to be inverted later
+                        break;
+                    case "single-set":
+                        filter.Single.Neutral = true;
+                        break;
+                    case "superdat":
+                        datHeader.Type = "SuperDAT";
+                        break;
+                    case "tar":
+                        outputFormat = OutputFormat.TapeArchive;
+                        break;
+                    case "torrent-7zip":
+                        outputFormat = OutputFormat.Torrent7Zip;
+                        break;
+                    case "torrent-gzip":
+                        outputFormat = OutputFormat.TorrentGzip;
+                        break;
+                    case "torrent-lrzip":
+                        outputFormat = OutputFormat.TorrentLRZip;
+                        break;
+                    case "torrent-lz4":
+                        outputFormat = OutputFormat.TorrentLZ4;
+                        break;
+                    case "torrent-rar":
+                        outputFormat = OutputFormat.TorrentRar;
+                        break;
+                    case "torrent-xz":
+                        outputFormat = OutputFormat.TorrentXZ;
+                        break;
+                    case "torrent-zip":
+                        outputFormat = OutputFormat.TorrentZip;
+                        break;
+                    case "torrent-zpaq":
+                        outputFormat = OutputFormat.TorrentZPAQ;
+                        break;
+                    case "torrent-zstd":
+                        outputFormat = OutputFormat.TorrentZstd;
+                        break;
+                    case "trim":
+                        filter.Trim.Neutral = true;
+                        break;
+                    case "type":
+                        splittingMode |= SplittingMode.Type;
+                        break;
+                    case "update-dat":
+                        updateDat = true;
+                        break;
+                    case "update-description":
+                        replaceMode |= ReplaceMode.Description;
+                        break;
+                    case "update-game-type":
+                        replaceMode |= ReplaceMode.MachineType;
+                        break;
+                    case "update-hashes":
+                        replaceMode |= ReplaceMode.Hash;
+                        break;
+                    case "update-manufacturer":
+                        replaceMode |= ReplaceMode.Manufacturer;
+                        break;
+                    case "update-names":
+                        replaceMode |= ReplaceMode.ItemName;
+                        break;
+                    case "update-parents":
+                        replaceMode |= ReplaceMode.Parents;
+                        break;
+                    case "update-year":
+                        replaceMode |= ReplaceMode.Year;
+                        break;
 
-			// List all available systems
-			else if (listsys)
-			{
-				ListSystems();
-			}
+                    #endregion
 
-			// Convert, update, merge, diff, and filter a DAT or folder of DATs
-			else if (update || outputCMP || outputMiss || outputRC || outputSD || outputXML || merge || diff)
-			{
-				InitUpdate(inputs, filename, name, description, rootdir, category, version, date, author, email, homepage, url, comment, header,
-					superdat, forcemerge, forcend, forcepack, outputCMP, outputMiss, outputRC, outputSD, outputXML, usegame, prefix,
-					postfix, quotes, repext, addext, datprefix, romba, tsv, merge, diff, cascade, inplace, skip, bare, gamename, romname,
-					romtype, sgt, slt, seq, crc, md5, sha1, nodump, trim, single, root, outdir, clean, softlist, dedup);
-			}
+                    #region User Int32 Inputs
 
-			// Add a source or system
-			else if (add)
-			{
-				if (manu != "" && systems != "")
-				{
-					InitAddSystem(manu, systems);
-				}
-				else if (sources != "" && url != "")
-				{
-					InitAddSource(manu, systems);
-				}
-				else
-				{
-					Build.Help();
-				}
-			} 
-			
-			// Remove a source or system
-			else if (rem)
-			{
-				if (systems != "")
-				{
-					InitRemoveSystem(systems);
-				}
-				else if (sources != "")
-				{
-					InitRemoveSource(sources);
-				}
-				else
-				{
-					Build.Help();
-				}
-			}
+                    case "7z":
+                        sevenzip = (int)feat.Value.GetValue() == Int32.MinValue ? (int)feat.Value.GetValue() : 1;
+                        break;
+                    case "gz":
+                        gz = (int)feat.Value.GetValue() == Int32.MinValue ? (int)feat.Value.GetValue() : 1;
+                        break;
+                    case "rar":
+                        rar = (int)feat.Value.GetValue() == Int32.MinValue ? (int)feat.Value.GetValue() : 1;
+                        break;
+                    case "threads":
+                        int val = (int)feat.Value.GetValue();
+                        if (val != Int32.MinValue)
+                        {
+                            Globals.MaxThreads = val;
+                        }
+                        break;
+                    case "zip":
+                        zip = (int)feat.Value.GetValue() == Int32.MinValue ? (int)feat.Value.GetValue() : 1;
+                        break;
 
-			// Split a DAT by extension
-			else if (extsplit)
-			{
-				InitExtSplit(inputs, exta, extb, outdir);
-			}
+                    #endregion
 
-			// Split a DAT by available hashes
-			else if (hashsplit)
-			{
-				InitHashSplit(inputs, outdir);
-			}
+                    #region User Int64 Inputs
 
-			// Get statistics on input files
-			else if (stats)
-			{
-				InitStats(inputs, single);
-			}
+                    case "radix":
+                        radix = (long)feat.Value.GetValue() == Int64.MinValue ? (long)feat.Value.GetValue() : 0;
+                        break;
 
-			// Create a DAT from a directory or set of directories
-			else if (datfromdir)
-			{
-				InitDatFromDir(inputs, filename, name, description, category, version, author, forceunpack, old, romba, superdat, noMD5, noSHA1, bare, archivesAsFiles, enableGzip, tempdir);
-			}
+                    #endregion
 
-			// If we want to run Offline merging mode
-			else if (offlineMerge)
-			{
-				if (!(currentAllMerged == "" && currentMissingMerged == "" && currentNewMerged == ""))
-				{
-					InitOfflineMerge(currentAllMerged, currentMissingMerged, currentNewMerged, fake);
-				}
-				else
-				{
-					_logger.User("All inputs were empty! At least one input is required...");
-					Build.Help();
-					_logger.Close();
-					return;
-				}
-			}
+                    #region User List<string> Inputs
 
-			// If nothing is set, show the help
-			else
-			{
-				Build.Help();
-			}
+                    case "base-dat":
+                        basePaths.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "crc":
+                        filter.CRC.PositiveSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "dat":
+                        datfiles.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "exclude-field": // TODO: Use this
+                        foreach (string field in (List<string>)feat.Value.GetValue())
+                        {
+                            datHeader.ExcludeFields[(int)Utilities.GetField(field)] = true;
+                        }
+                        break;
+                    case "exta":
+                        exta.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "extb":
+                        extb.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "game-description":
+                        filter.MachineDescription.PositiveSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "game-name":
+                        filter.MachineName.PositiveSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "game-type":
+                        foreach (string mach in (List<string>)feat.Value.GetValue())
+                        {
+                            filter.MachineTypes.Positive |= Utilities.GetMachineType(mach);
+                        }
+                        break;
+                    case "item-name":
+                        filter.ItemName.PositiveSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "item-type":
+                        filter.ItemTypes.PositiveSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "md5":
+                        filter.MD5.PositiveSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "not-crc":
+                        filter.CRC.NegativeSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "not-game-description":
+                        filter.MachineDescription.NegativeSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "not-game-name":
+                        filter.MachineName.NegativeSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "not-game-type":
+                        foreach (string nmach in (List<string>)feat.Value.GetValue())
+                        {
+                            filter.MachineTypes.Negative |= Utilities.GetMachineType(nmach);
+                        }
+                        break;
+                    case "not-item-name":
+                        filter.ItemName.NegativeSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "not-item-type":
+                        filter.ItemTypes.NegativeSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "not-md5":
+                        filter.MD5.NegativeSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "not-sha1":
+                        filter.SHA1.NegativeSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "not-sha256":
+                        filter.SHA256.NegativeSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "not-sha384":
+                        filter.SHA384.NegativeSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "not-sha512":
+                        filter.SHA512.NegativeSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "not-status":
+                        foreach (string nstat in (List<string>)feat.Value.GetValue())
+                        {
+                            filter.ItemStatuses.Negative |= Utilities.GetItemStatus(nstat);
+                        }
+                        break;
+                    case "output-type":
+                        foreach (string ot in (List<string>)feat.Value.GetValue())
+                        {
+                            DatFormat dftemp = Utilities.GetDatFormat(ot);
+                            if (dftemp != DatFormat.Logiqx
+                                || (dftemp == DatFormat.Logiqx && (datHeader.DatFormat & DatFormat.LogiqxDepreciated) == 0))
+                            {
+                                datHeader.DatFormat |= dftemp;
+                            }
+                        }
+                        break;
+                    case "report-type":
+                        foreach (string rt in (List<string>)feat.Value.GetValue())
+                        {
+                            statDatFormat |= Utilities.GetStatFormat(rt);
+                        }
+                        break;
+                    case "sha1":
+                        filter.SHA1.PositiveSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "sha256":
+                        filter.SHA256.PositiveSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "sha384":
+                        filter.SHA384.PositiveSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "sha512":
+                        filter.SHA512.PositiveSet.AddRange((List<string>)feat.Value.GetValue());
+                        break;
+                    case "status":
+                        foreach (string stat in (List<string>)feat.Value.GetValue())
+                        {
+                            filter.ItemStatuses.Positive |= Utilities.GetItemStatus(stat);
+                        }
+                        break;
+                    case "update-field": // TODO: Use this
+                        foreach (string field in (List<string>)feat.Value.GetValue())
+                        {
+                            updateFields.Add(Utilities.GetField(field));
+                        }
+                        break;
 
-			_logger.Close();
-			return;
-		}
-	}
+                    #endregion
+
+                    #region User String Inputs
+
+                    case "add-extension":
+                        datHeader.AddExtension = (string)feat.Value.GetValue();
+                        break;
+                    case "author":
+                        datHeader.Author = (string)feat.Value.GetValue();
+                        break;
+                    case "category":
+                        datHeader.Category = (string)feat.Value.GetValue();
+                        break;
+                    case "comment":
+                        datHeader.Comment = (string)feat.Value.GetValue();
+                        break;
+                    case "date":
+                        datHeader.Date = (string)feat.Value.GetValue();
+                        break;
+                    case "description":
+                        datHeader.Description = (string)feat.Value.GetValue();
+                        break;
+                    case "email":
+                        datHeader.Email = (string)feat.Value.GetValue();
+                        break;
+                    case "equal":
+                        filter.Size.Neutral = Utilities.GetSizeFromString((string)feat.Value.GetValue());
+                        break;
+                    case "filename":
+                        datHeader.FileName = (string)feat.Value.GetValue();
+                        break;
+                    case "forcemerging":
+                        datHeader.ForceMerging = Utilities.GetForceMerging((string)feat.Value.GetValue());
+                        break;
+                    case "forcenodump":
+                        datHeader.ForceNodump = Utilities.GetForceNodump((string)feat.Value.GetValue());
+                        break;
+                    case "forcepacking":
+                        datHeader.ForcePacking = Utilities.GetForcePacking((string)feat.Value.GetValue());
+                        break;
+                    case "greater":
+                        filter.Size.Positive = Utilities.GetSizeFromString((string)feat.Value.GetValue());
+                        break;
+                    case "header":
+                        datHeader.Header = (string)feat.Value.GetValue();
+                        break;
+                    case "homepage":
+                        datHeader.Homepage = (string)feat.Value.GetValue();
+                        break;
+                    case "less":
+                        filter.Size.Negative = Utilities.GetSizeFromString((string)feat.Value.GetValue());
+                        break;
+                    case "name":
+                        datHeader.Name = (string)feat.Value.GetValue();
+                        break;
+                    case "output-dir":
+                        outDir = (string)feat.Value.GetValue();
+                        break;
+                    case "postfix":
+                        datHeader.Postfix = (string)feat.Value.GetValue();
+                        break;
+                    case "prefix":
+                        datHeader.Prefix = (string)feat.Value.GetValue();
+                        break;
+                    case "replace-extension":
+                        datHeader.ReplaceExtension = (string)feat.Value.GetValue();
+                        break;
+                    case "root":
+                        datHeader.RootDir = (string)feat.Value.GetValue();
+                        break;
+                    case "root-dir":
+                        filter.Root.Neutral = (string)feat.Value.GetValue();
+                        break;
+                    case "temp":
+                        tempDir = (string)feat.Value.GetValue();
+                        break;
+                    case "url":
+                        datHeader.Url = (string)feat.Value.GetValue();
+                        break;
+                    case "version":
+                        datHeader.Version = (string)feat.Value.GetValue();
+                        break;
+
+                        #endregion
+                }
+            }
+
+            // Now take care of each mode in succesion
+            switch (feature)
+            {
+                case "Help":
+                    // No-op as this should be caught
+                    break;
+                // Create a DAT from a directory or set of directories
+                case "DATFromDir":
+                    VerifyInputs(inputs, feature);
+                    InitDatFromDir(inputs, datHeader, omitFromScan, noAutomaticDate, archivesAsFiles, chdsAsFiles,
+                        skipFileType, addBlankFiles, addFileDates, tempDir, outDir, copyFiles, filter);
+                    break;
+                // If we're in header extract and remove mode
+                case "Extract":
+                    VerifyInputs(inputs, feature);
+                    InitExtractRemoveHeader(inputs, outDir, nostore);
+                    break;
+                // If we're in header restore mode
+                case "Restore":
+                    VerifyInputs(inputs, feature);
+                    InitReplaceHeader(inputs, outDir);
+                    break;
+                case "Script":
+                    // No-op as this should be caught
+                    break;
+                // If we're using the sorter
+                case "Sort":
+                    InitSort(datfiles, inputs, outDir, depot, quickScan, addFileDates, delete, inverse,
+                        outputFormat, datHeader.Romba, sevenzip, gz, rar, zip, updateDat, datHeader.Header,
+                        splitType, chdsAsFiles, individual);
+                    break;
+                // Split a DAT by the split type
+                case "Split":
+                    VerifyInputs(inputs, feature);
+                    InitSplit(inputs, outDir, inplace, datHeader.DatFormat, splittingMode, exta, extb, shortname, basedat, radix);
+                    break;
+                // Get statistics on input files
+                case "Stats":
+                    VerifyInputs(inputs, feature);
+                    InitStats(inputs, datHeader.FileName, outDir, individual, showBaddumpColumn, showNodumpColumn, statDatFormat);
+                    break;
+                // Convert, update, merge, diff, and filter a DAT or folder of DATs
+                case "Update":
+                    VerifyInputs(inputs, feature);
+                    InitUpdate(inputs, basePaths, datHeader, updateMode, inplace, skipFirstOutput, noAutomaticDate, filter,
+                        splitType, outDir, cleanGameNames, removeUnicode, descAsName, replaceMode, onlySame);
+                    break;
+                // If we're using the verifier
+                case "Verify":
+                    VerifyInputs(inputs, feature);
+                    InitVerify(datfiles, inputs, depot, hashOnly, quickScan, datHeader.Header, splitType, chdsAsFiles, individual, filter);
+                    break;
+                // If nothing is set, show the help
+                default:
+                    _help.OutputGenericHelp();
+                    break;
+            }
+
+            Globals.Logger.Close();
+            return;
+        }
+
+        private static void VerifyInputs(List<string> inputs, string feature)
+        {
+            if (inputs.Count == 0)
+            {
+                Globals.Logger.Error("This feature requires at least one input");
+                _help.OutputIndividualFeature(feature);
+                Environment.Exit(0);
+            }
+        }
+    }
 }
